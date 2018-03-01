@@ -1,0 +1,37 @@
+package Crawler;
+
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class DocumentMaker extends Thread {
+
+    private AtomicInteger documentCount;
+    private BlockingQueue<String> queue;
+    private String location;
+    private int maxDocumentCount;
+
+    public DocumentMaker(BlockingQueue<String> q, String loc, AtomicInteger documentCount, int maxDocumentCount,int priority)
+    {
+        this.setPriority(priority);
+        location = loc;
+        queue = q;
+        this.documentCount = documentCount;
+        this.maxDocumentCount = maxDocumentCount;
+    }
+
+    @Override
+    public void run() {
+        while(documentCount.get() < maxDocumentCount) {
+            try {
+                try (PrintWriter out = new PrintWriter(location + "Document[" + Integer.toString(documentCount.getAndIncrement()) + "].html")) {
+                    out.println(queue.poll(10, TimeUnit.SECONDS));
+                }
+            } catch (FileNotFoundException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
