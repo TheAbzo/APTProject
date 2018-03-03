@@ -1,4 +1,5 @@
 package Crawler;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -30,16 +31,17 @@ public class SpiderLeg extends Thread{
 	public void run() {
         String currentURL;
         HashSet<String> newURLList;
-        while (documentCount.getAndIncrement() < maxDocumentCount) {
+        while (documentCount.get() < maxDocumentCount) {
             try {
                 currentURL = urlQueue.take();
                 Document doc = getDocument(currentURL);
-                if (doc == null)
+                if (doc == null || doc.text().isEmpty())
                 {
                     continue;
                 }
                 //TODO: Fix
                 documentQueue.put(currentURL + "||" + doc.text());
+                System.out.println(documentCount.incrementAndGet());
                 Elements newURLs = doc.select("a[href]");
                 newURLList = toStringSet(newURLs);
                 for (String url : newURLList){
@@ -49,8 +51,8 @@ public class SpiderLeg extends Thread{
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }catch(IllegalStateException e){
-                e.printStackTrace();
-                System.out.println("Shared Queue might be full");
+                //e.printStackTrace();
+                //System.out.println("Shared Queue might be full");
             }
         }
     }
@@ -69,15 +71,16 @@ public class SpiderLeg extends Thread{
 
     private Document getDocument(String url) {
         try {
-            return Jsoup.connect(url)
+            Connection connection = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.124 Safari/537.36")
                     .referrer("https://www.google.com")
                     .timeout(12000)
                     .followRedirects(true)
-                    .maxBodySize(Integer.MAX_VALUE)
-                    .get();
+                    .maxBodySize(Integer.MAX_VALUE);
+            Document doc = connection.get();
+            if(connection.response().statusCode() == 200)
+                    return doc;
         }catch (IOException e){
-            documentCount.decrementAndGet();
             System.out.println("Error: " + url);
             e.printStackTrace();
         }

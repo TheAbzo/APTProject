@@ -26,8 +26,11 @@ public class DocumentMaker extends Thread {
     public void run() {
         while(documentCount.get() < maxDocumentCount) {
             try {
+                String s = queue.poll(10, TimeUnit.SECONDS);
+                if(s == null || s.isEmpty())
+                    continue;
                 try (PrintWriter out = new PrintWriter(location + "Document[" + Integer.toString(documentCount.getAndIncrement()) + "].html")) {
-                    out.println(queue.poll(10, TimeUnit.SECONDS));
+                    out.println(s);
                 }
             } catch (FileNotFoundException | InterruptedException e) {
                 e.printStackTrace();
