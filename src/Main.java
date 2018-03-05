@@ -81,7 +81,7 @@ public class Main {
     /**
      * #@param robotLink the link of robot.txt
      *
-     * @return string link of siteMap if found or -1 if not found
+     * @return string link of  xml siteMap if found or -1 if not found
      */
     public static String getSiteMapLink(String robotLink) throws Exception
     {
